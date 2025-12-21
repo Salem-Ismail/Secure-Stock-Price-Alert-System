@@ -1,3 +1,4 @@
+package com.salem.stockalert;
 import java.util.Objects;
 
 public final class Symbol{

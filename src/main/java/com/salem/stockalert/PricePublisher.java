@@ -1,0 +1,7 @@
+package com.salem.stockalert;
+public interface PricePublisher {
+    void subscribe(PriceSubscriber subscriber);
+    void unsubscribe(PriceSubscriber subscriber);
+    void publish(PriceQuote quote);
+    
+}

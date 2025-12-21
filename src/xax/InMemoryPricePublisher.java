@@ -1,3 +1,4 @@
+package src.xax;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 public class InMemoryPricePublisher implements PricePublisher {

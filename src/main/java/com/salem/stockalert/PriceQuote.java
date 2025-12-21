@@ -1,3 +1,4 @@
+package com.salem.stockalert;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.Objects;
