@@ -9,12 +9,13 @@ import java.util.concurrent.TimeUnit;
 /**
  * Milestone 3 runner: starts one SymbolPoller per symbol and shuts down cleanly.
  */
+
 public final class App {
     public static void main(String[] args) {
         PricePublisher publisher = new InMemoryPricePublisher();
         publisher.subscribe(new LoggingPriceSubscriber());
 
-        PriceDataProvider provider = new FakePriceDataProvider();
+        PriceDataProvider provider = new FinnhubPriceDataProvider();
         Duration interval = Duration.ofSeconds(2);
 
         List<SymbolPoller> pollers = List.of(
@@ -38,5 +39,3 @@ public final class App {
         System.out.println("Running pollers. Press Ctrl+C to stop.");
     }
 }
-
-

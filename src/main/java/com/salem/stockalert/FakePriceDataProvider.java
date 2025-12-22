@@ -27,5 +27,3 @@ public final class FakePriceDataProvider implements PriceDataProvider {
         return new PriceQuote(symbol, next, Instant.now());
     }
 }
-
-
