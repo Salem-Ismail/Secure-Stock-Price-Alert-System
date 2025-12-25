@@ -15,8 +15,9 @@ public final class App {
         PricePublisher publisher = new InMemoryPricePublisher();
         publisher.subscribe(new LoggingPriceSubscriber());
 
-        PriceDataProvider provider = new FinnhubPriceDataProvider();
-        Duration interval = Duration.ofSeconds(2);
+        //PriceDataProvider provider = new FinnhubPriceDataProvider();
+        PriceDataProvider provider = new RetryingPriceDataProvider(new FinnhubPriceDataProvider(), 5, Duration.ofMillis(250), Duration.ofSeconds(5));
+        Duration interval = Duration.ofSeconds(6);
 
         List<SymbolPoller> pollers = List.of(
             new SymbolPoller(new Symbol("AAPL"), provider, publisher, interval),

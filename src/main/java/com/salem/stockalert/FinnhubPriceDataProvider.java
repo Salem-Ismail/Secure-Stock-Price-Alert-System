@@ -31,7 +31,7 @@ public class FinnhubPriceDataProvider implements PriceDataProvider {
         }
         
         // read the API key, and throw error if null/blank
-        String key = System.getenv("FINNHUB_API_KEY");
+        String key = System.getenv(API_KEY_ENV);
         if (key == null || key.isEmpty()){
             throw new IllegalStateException("Missing FINNHUB_API_KEY");
         }
@@ -39,20 +39,35 @@ public class FinnhubPriceDataProvider implements PriceDataProvider {
         // requesting url
         String encoded = URLEncoder.encode(symbol.getTicker(), StandardCharsets.UTF_8);
         String url = BASE_URL + "?symbol=" + encoded + "&token=" + key;
-        
+
         // sending http request
         HttpRequest request = HttpRequest.newBuilder(URI.create(url)).GET().build();
         HttpResponse<String> response;
         try {
             response = http.send(request, BodyHandlers.ofString());
-        } catch (IOException | InterruptedException e) {
-            throw new RuntimeException("Failed to fetch price data", e);
+        } catch (IOException e) {
+            throw new TransientProviderException("Network/IO failure talking to Finnhub", e);
         }
-        int status = response.statusCode();
+          catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new TransientProviderException("Interrupted while calling Finnhub", e);
+        }       
 
-        // non-200 status
-        if (status != 200){
-            throw new RuntimeException("HTTP " + status + ". Check FINNHUB_API_KEY");
+        int status = response.statusCode();
+        String body = response.body();
+
+        // http status handling
+        if (status == 401 || status == 403){
+            throw new FatalProviderException("Finnhub unauthorized (check FINNHUB_API_KEY). status=" + status); 
+        }
+        if (status == 429) {
+            throw new TransientProviderException("Finnhub rate limited. status=429");
+        }
+        if (status >= 500 && status <= 599) {
+            throw new TransientProviderException("Finnhub server error. status=" + status);
+        }
+        if (status != 200) {
+            throw new FatalProviderException("Finnhub unexpected status=" + status + " body=" + body);
         }
 
         // parsing JSON
@@ -60,7 +75,7 @@ public class FinnhubPriceDataProvider implements PriceDataProvider {
 
         // validating parsed fields
         if (dto == null || dto.c == null || dto.t == null || dto.t <= 0){
-            throw new IllegalArgumentException();
+            throw new FatalProviderException("Bad Finnhub response body=" + body);
         }
 
         return new PriceQuote(symbol, dto.c, Instant.ofEpochSecond(dto.t));
