@@ -1,5 +1,6 @@
 package com.salem.stockalert;
 
+import java.math.BigDecimal;
 import java.time.Duration;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
@@ -23,6 +24,22 @@ public final class App {
             new SymbolPoller(new Symbol("AAPL"), provider, publisher, interval),
             new SymbolPoller(new Symbol("MSFT"), provider, publisher, interval)
         );
+
+        // alerts go here (for now: print to console)
+        AlertSink sink = new LoggingAlertSink();
+
+        // demo rule: trigger once when aapl crosses ABOVE 274.00
+        List<AlertRule> rules = List.of(
+            new PriceThresholdRule(
+                "aapl-above-274",
+                new Symbol("AAPL"),
+                new BigDecimal("274.00"),
+                PriceThresholdRule.Direction.ABOVE
+            )
+        );
+
+        // subscribe alert evaluator to price updates (observer pattern)
+        publisher.subscribe(new AlertEvaluatorSubscriber(rules, sink));
 
         ExecutorService exec = Executors.newFixedThreadPool(pollers.size());
         pollers.forEach(exec::execute);
